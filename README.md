@@ -13,7 +13,7 @@ Pre-Processing in juypter-notebook Exploration.ipynb:
   - Keep only full sentences
   - Binarize Sentiment (1 or 0)
   - Tokenize sentences
-  - Remove stopwords and similar
+  - Remove stopwords and similar (***** CHANGE THIS! KEEP IMPORTANT ONES *********)
   - ...
 
 To Do:
