@@ -17,7 +17,7 @@ Pre-Processing in juypter-notebook Exploration.ipynb:
   - ...
 
 To Do:
-
+  - Choose vocabulary size (tf-id? "by-hand" select few good features?...)
   - simple word2Vec, GloVe, ...  pre-processing
   - Compare performance with different pre-processing
   - Compare performance with different algorithms (simple perceptron, Neural Nets, basic ML algo?)
