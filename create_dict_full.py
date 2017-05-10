@@ -6,7 +6,7 @@ from nltk.tokenize import RegexpTokenizer
 from collections import Counter
 import operator
 
-oovf = 0
+oovf = 1
 
 def load_train():
 	tr_f = './Data/train.tsv'
@@ -22,7 +22,8 @@ def load_train():
 def tokenize_stopwords(df):
 	# Tokenize and remove punctuation
 	tokenizer = RegexpTokenizer(r'\w+')
-	english_sw = stopwords.words('english')
+	#english_sw = stopwords.words('english')
+	english_sw = []
 	tokens = tokenizer.tokenize(df['Phrase'])
 	#tokens = nltk.word_tokenize(df['Phrase'])
 	return [t.lower() for t in tokens if t.lower() not in (english_sw + ['rrb','lrb'])] 

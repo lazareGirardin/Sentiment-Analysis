@@ -78,7 +78,7 @@ def try_binary():
 
 def try_categ():
 
-	top_words = 15000
+	top_words = 10000
 	x_filename = 'Data/x_%d' %top_words + '.npy'
 	y_filename = 'Data/y_%d' %top_words + '.npy'
 
@@ -93,7 +93,7 @@ def try_categ():
 
 	x= x.reshape((x.shape[0], x.shape[1]))
 
-	t_ratio = 0.6
+	t_ratio = 0.9
 	tr_length = int(t_ratio*x.shape[0])
 
 	# Add randomization here
@@ -112,11 +112,11 @@ def try_categ():
 	y_test = np_utils.to_categorical(y_test)
 
 	model = Sequential()
-	model.add(Embedding(top_words, 32, input_length=max_words))
-	model.add(Conv1D(32, 3, border_mode='same', activation='relu'))
+	model.add(Embedding(top_words, 64, input_length=max_words))
+	model.add(Conv1D(64, 3, border_mode='same', activation='relu'))
 	model.add(MaxPooling1D(2))
 	model.add(Flatten())
-	model.add(Dense(250, activation='relu'))
+	model.add(Dense(512, activation='relu'))
 	#Output
 	model.add(Dense(nb_class, activation='softmax'))
 	model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
