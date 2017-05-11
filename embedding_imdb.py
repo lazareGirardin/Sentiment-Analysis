@@ -1,5 +1,5 @@
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation, Flatten, Reshape, SpatialDropout2D
+from keras.layers import Dense, Dropout, Activation, Flatten, Reshape, SpatialDropout2D, LSTM, BatchNormalization
 #from keras.layers import Convolution2D, MaxPooling2D
 from keras.layers.convolutional import Conv1D
 from keras.layers.convolutional import MaxPooling1D
@@ -14,6 +14,8 @@ from keras import backend as K
 from keras.datasets import imdb
 import numpy as np
 import os
+
+from sklearn.metrics import f1_score, confusion_matrix
 
 from create_dict_full import *
 
@@ -30,7 +32,7 @@ def import_imdb():
 
 def try_binary():
 
-	top_words = 15000
+	top_words = 10000
 	x_filename = 'Data/x_%d' %top_words + '.npy'
 	y_filename = 'Data/y_%d' %top_words + '.npy'
 
@@ -59,22 +61,26 @@ def try_binary():
 	nb_class = 1
 
 	model = Sequential()
-	model.add(Embedding(top_words, 32, input_length=max_words))
-	model.add(Conv1D(32, 12, border_mode='same', activation='relu'))
+	model.add(Embedding(top_words, 64, input_length=max_words))
+	model.add(Conv1D(64, 12, border_mode='same', activation='relu'))
 	model.add(MaxPooling1D(2))
 	model.add(Flatten())
 	model.add(Dense(250, activation='relu'))
-	model.add(Dense(250, activation='relu'))
-	model.add(Dense(250, activation='relu'))
+
 	model.add(Dense(nb_class, activation='sigmoid'))
-	model.compile(loss='binary_crossentropy', optimizer='adam', metrics=[accuracy])
+	model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
 	print(model.summary())
 
 	# Fit the model
-	model.fit(x_train, y_train, validation_data=(x_test, y_test), nb_epoch=2, batch_size=128, verbose=2)
+	model.fit(x_train, y_train, validation_data=(x_test, y_test), nb_epoch=2, class_weight='auto', batch_size=128, verbose=1)
 	# Final evaluation of the model
 	scores = model.evaluate(x_test, y_test, verbose=0)
-	print(scores)
+	print("Accuracy: %.2f%%" % (scores[1]*100))
+
+	y_pred = model.predict_classes(x_test, verbose=1)
+
+	print('\n')
+	print(f1_score(y_test, y_pred))
 
 def try_categ():
 
@@ -93,7 +99,7 @@ def try_categ():
 
 	x= x.reshape((x.shape[0], x.shape[1]))
 
-	t_ratio = 0.9
+	t_ratio = 0.6
 	tr_length = int(t_ratio*x.shape[0])
 
 	# Add randomization here
@@ -109,21 +115,111 @@ def try_categ():
 	nb_class = 5
 
 	y_train = np_utils.to_categorical(y_train)
+	y_true = y_test.copy() # Keep real values for test results
 	y_test = np_utils.to_categorical(y_test)
 
 	model = Sequential()
-	model.add(Embedding(top_words, 64, input_length=max_words))
-	model.add(Conv1D(64, 3, border_mode='same', activation='relu'))
+	model.add(Embedding(top_words, 128, input_length=max_words))
+	model.add(Conv1D(128, 16, border_mode='same', activation='relu'))
 	model.add(MaxPooling1D(2))
 	model.add(Flatten())
 	model.add(Dense(512, activation='relu'))
+	model.add(Dense(512, activation='relu'))
+
 	#Output
 	model.add(Dense(nb_class, activation='softmax'))
 	model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 	print(model.summary())
 
 	# Fit the model
-	model.fit(x_train, y_train, validation_data=(x_test, y_test), nb_epoch=3, batch_size=128, verbose=2)
+	model.fit(x_train, y_train, validation_data=(x_test, y_test), nb_epoch=3, batch_size=128, verbose=1)
 	# Final evaluation of the model
 	scores = model.evaluate(x_test, y_test, verbose=0)
 	print("Accuracy: %.2f%%" % (scores[1]*100))
+
+	y_pred = model.predict(x_test, verbose=1)
+
+	y_pred_class = np.argmax(y_pred, axis=1)
+
+
+	print('\n')
+	cmat = confusion_matrix(y_true, y_pred_class)
+	print(cmat)
+	print(f1_score(y_true, y_pred_class, average=None))
+
+	import pdb; pdb.set_trace()
+
+
+def try_LSTM():
+
+	top_words = 10000
+	x_filename = 'Data/x_%d' %top_words + '.npy'
+	y_filename = 'Data/y_%d' %top_words + '.npy'
+
+	if os.path.isfile(x_filename) and os.path.isfile(y_filename):
+		x = np.load(x_filename)
+		y = np.load(y_filename)
+	else:
+		x, y = create_data(top_words, False)
+	
+	x = sequence.pad_sequences(x)
+	max_words = x.shape[1]
+
+	x= x.reshape((x.shape[0], x.shape[1]))
+
+	t_ratio = 0.7
+	tr_length = int(t_ratio*x.shape[0])
+
+	# Add randomization here
+	x_train = x[:tr_length]
+	x_test = x[tr_length:]
+	y_train = y[:tr_length]
+	y_test = y[tr_length:]
+
+
+	print(x_train.shape)
+
+	#import pdb; pdb.set_trace() 
+	nb_class = 5
+
+	y_train = np_utils.to_categorical(y_train)
+	y_true = y_test.copy() # Keep real values for test results
+	y_test = np_utils.to_categorical(y_test)
+
+	model = Sequential()
+	model.add(Embedding(top_words, 256, input_length=max_words, trainable=True))
+	#model.add(Conv1D(256, 16, border_mode='same', activation='relu'))
+	#model.add(MaxPooling1D(2))
+
+	model.add(LSTM(256, return_sequences=False, dropout_W = 0.3, dropout_U = 0.3))
+	model.add(BatchNormalization())
+	#model.add(Flatten())
+	model.add(Dense(512, activation='relu'))
+	#model.add(Dense(256, activation='relu'))
+
+	# Add dropout
+
+	#Output
+	model.add(Dense(nb_class, activation='softmax'))
+
+
+	model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['categorical_accuracy'])
+	print(model.summary())
+
+	# Fit the model
+	model.fit(x_train, y_train, validation_data=(x_test, y_test), nb_epoch=3, batch_size=128, class_weight='auto',verbose=1)
+	# Final evaluation of the model
+	scores = model.evaluate(x_test, y_test, verbose=0)
+	print("Accuracy: %.2f%%" % (scores[1]*100))
+
+	y_pred = model.predict(x_test, verbose=1)
+
+	y_pred_class = np.argmax(y_pred, axis=1)
+
+
+	print('\n')
+	cmat = confusion_matrix(y_true, y_pred_class)
+	print(cmat)
+	print(f1_score(y_true, y_pred_class, average=None))
+
+	import pdb; pdb.set_trace()
