@@ -22,6 +22,10 @@ To Do:
   - Compare performance with different pre-processing
   - Compare performance with different algorithms (simple perceptron, Neural Nets, basic ML algo?)
   - Best performance: upload on Kaggle to compare with existing solutions?
+  
+Preprocessing:
+   - Tokenizer, without stopwords : 15273 unique words
+   - Tokenizer and Stemmer: 10493 unique words!
 
 
   
