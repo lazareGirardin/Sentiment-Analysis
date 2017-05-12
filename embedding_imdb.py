@@ -152,7 +152,10 @@ def try_categ():
 
 def try_LSTM():
 
-	top_words = 10000
+	stemmer = True
+	binary_class = False
+	top_words = 8000
+
 	x_filename = 'Data/x_%d' %top_words + '.npy'
 	y_filename = 'Data/y_%d' %top_words + '.npy'
 
@@ -160,7 +163,7 @@ def try_LSTM():
 		x = np.load(x_filename)
 		y = np.load(y_filename)
 	else:
-		x, y = create_data(top_words, False)
+		x, y = create_data(top_words, binary_class, stemmer)
 	
 	x = sequence.pad_sequences(x)
 	max_words = x.shape[1]
@@ -187,14 +190,15 @@ def try_LSTM():
 	y_test = np_utils.to_categorical(y_test)
 
 	model = Sequential()
-	model.add(Embedding(top_words, 256, input_length=max_words, trainable=True))
-	#model.add(Conv1D(256, 16, border_mode='same', activation='relu'))
-	#model.add(MaxPooling1D(2))
+	model.add(Embedding(top_words, 64, input_length=max_words, trainable=True))
+	model.add(Conv1D(64, 3, border_mode='same', activation='relu'))
+	model.add(MaxPooling1D(2))
 
-	model.add(LSTM(256, return_sequences=False, dropout_W = 0.3, dropout_U = 0.3))
+
+	model.add(LSTM(64, return_sequences=False, dropout_W = 0.3, dropout_U = 0.3))
 	model.add(BatchNormalization())
 	#model.add(Flatten())
-	model.add(Dense(512, activation='relu'))
+	model.add(Dense(64, activation='relu'))
 	#model.add(Dense(256, activation='relu'))
 
 	# Add dropout
@@ -207,7 +211,7 @@ def try_LSTM():
 	print(model.summary())
 
 	# Fit the model
-	model.fit(x_train, y_train, validation_data=(x_test, y_test), nb_epoch=3, batch_size=128, class_weight='auto',verbose=1)
+	model.fit(x_train, y_train, validation_data=(x_test, y_test), nb_epoch=2, batch_size=128, class_weight='auto',verbose=1)
 	# Final evaluation of the model
 	scores = model.evaluate(x_test, y_test, verbose=0)
 	print("Accuracy: %.2f%%" % (scores[1]*100))
@@ -221,5 +225,6 @@ def try_LSTM():
 	cmat = confusion_matrix(y_true, y_pred_class)
 	print(cmat)
 	print(f1_score(y_true, y_pred_class, average=None))
+	print(f1_score(y_true, y_pred_class, average='weighted'))
 
-	import pdb; pdb.set_trace()
+	#import pdb; pdb.set_trace()
