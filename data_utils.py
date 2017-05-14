@@ -133,8 +133,8 @@ def tokenize_stopwords(df):
 def tokenize_selected(df):
 	# Tokenize and remove punctuation
 	tokenizer = RegexpTokenizer(r'\w+')
-	#english_sw = stopwords.words('english')
-	english_sw = ['FILL IN']
+	# CHANGE HERE !
+	english_sw = ['a', 'i', 'me', 'you', 'of']
 	tokens = tokenizer.tokenize(df['Phrase'])
 	return [t.lower() for t in tokens if t.lower() not in (english_sw + ['rrb','lrb'])] 
 

@@ -41,7 +41,7 @@ def perceptron_comparison(folds):
 	model.compile(loss='categorical_crossentropy', optimizer = 'adam', metrics=['categorical_accuracy'])
 	
 	#methods_list = ['token', 'stopwords', 'selected_stopwords', 'stem', 'lemm', 'word2vec', 'glove', 'n_gram']
-	methods_list = ['token']
+	methods_list = ['token', 'stopwords', 'selected_stopwords', 'stem', 'lemm']
 	acc = np.zeros((folds, 2))
 	f1 = np.zeros((folds, nb_class))
 	cmat = np.zeros((folds, nb_class, nb_class))
