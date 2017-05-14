@@ -16,6 +16,7 @@ import numpy as np
 import os
 
 from sklearn.metrics import f1_score, confusion_matrix
+from sklearn.utils import class_weight
 
 from create_dict_full import *
 
@@ -179,6 +180,7 @@ def try_LSTM():
 	y_train = y[:tr_length]
 	y_test = y[tr_length:]
 
+	class_w = class_weight.compute_class_weight('balanced', np.unique(y_train), y_train)
 
 	print(x_train.shape)
 
@@ -191,17 +193,17 @@ def try_LSTM():
 
 	model = Sequential()
 	model.add(Embedding(top_words, 64, input_length=max_words, trainable=True))
-	model.add(Conv1D(64, 3, border_mode='same', activation='relu'))
+	model.add(Conv1D(64, 4, border_mode='same', activation='relu'))
 	model.add(MaxPooling1D(2))
-
 
 	model.add(LSTM(64, return_sequences=False, dropout_W = 0.3, dropout_U = 0.3))
 	model.add(BatchNormalization())
 	#model.add(Flatten())
 	model.add(Dense(64, activation='relu'))
-	#model.add(Dense(256, activation='relu'))
+	#model.add(Dense(64, activation='relu'))
 
 	# Add dropout
+	model.add(Dropout(0.5))
 
 	#Output
 	model.add(Dense(nb_class, activation='softmax'))
@@ -211,7 +213,7 @@ def try_LSTM():
 	print(model.summary())
 
 	# Fit the model
-	model.fit(x_train, y_train, validation_data=(x_test, y_test), nb_epoch=2, batch_size=128, class_weight='auto',verbose=1)
+	model.fit(x_train, y_train, validation_data=(x_test, y_test), nb_epoch=3, batch_size=128, class_weight=class_w,verbose=1)
 	# Final evaluation of the model
 	scores = model.evaluate(x_test, y_test, verbose=0)
 	print("Accuracy: %.2f%%" % (scores[1]*100))

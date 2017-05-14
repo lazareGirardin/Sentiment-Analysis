@@ -25,7 +25,7 @@ def load_train(stemmer = False):
 
 
 def stem_words(row):
-    
+    # Add ~2% on class accuracy!
     eng_stemmer = SnowballStemmer('english')
     return [eng_stemmer.stem(word) for word in row["Phrase tokenized"]]
 
