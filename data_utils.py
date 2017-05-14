@@ -14,7 +14,8 @@ from keras.preprocessing import sequence
 from collections import Counter
 import operator
 
-def load_dict(datas = None, to_load=True,method, max_words):
+def load_dict(method, max_words, datas = None, to_load=True):
+	
 	if to_load:
 		tr_f = './Data/train.tsv'
 		datas = pd.DataFrame.from_csv(tr_f, sep='\t')
