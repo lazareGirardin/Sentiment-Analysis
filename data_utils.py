@@ -14,10 +14,10 @@ from keras.preprocessing import sequence
 from collections import Counter
 import operator
 
-def load_dict(method, max_words):
-
-	tr_f = './Data/train.tsv'
-	datas = pd.DataFrame.from_csv(tr_f, sep='\t')
+def load_dict(datas = None, to_load=True,method, max_words):
+	if to_load:
+		tr_f = './Data/train.tsv'
+		datas = pd.DataFrame.from_csv(tr_f, sep='\t')
 
 	# This variable indicates which column to take as data
 	dataColumn = 'token'
@@ -43,11 +43,11 @@ def load_dict(method, max_words):
 		dataColumn = 'lemm'
 
 	#elif method == 'word2vec':
-			
+
 	#elif method == 'glove':
-			
+
 	#elif method == 'n_gram':
-	
+
 	else:
 		print("Method name unknown!")
 
@@ -121,14 +121,14 @@ def tokenize(df):
 	tokenizer = RegexpTokenizer(r'\w+')
 	english_sw = []
 	tokens = tokenizer.tokenize(df['Phrase'])
-	return [t.lower() for t in tokens if t.lower() not in (english_sw + ['rrb','lrb'])] 
+	return [t.lower() for t in tokens if t.lower() not in (english_sw + ['rrb','lrb'])]
 
 def tokenize_stopwords(df):
 	# Tokenize and remove punctuation
 	tokenizer = RegexpTokenizer(r'\w+')
 	english_sw = stopwords.words('english')
 	tokens = tokenizer.tokenize(df['Phrase'])
-	return [t.lower() for t in tokens if t.lower() not in (english_sw + ['rrb','lrb'])] 
+	return [t.lower() for t in tokens if t.lower() not in (english_sw + ['rrb','lrb'])]
 
 def tokenize_selected(df):
 	# Tokenize and remove punctuation
@@ -136,7 +136,7 @@ def tokenize_selected(df):
 	# CHANGE HERE !
 	english_sw = ['a', 'i', 'me', 'you', 'of']
 	tokens = tokenizer.tokenize(df['Phrase'])
-	return [t.lower() for t in tokens if t.lower() not in (english_sw + ['rrb','lrb'])] 
+	return [t.lower() for t in tokens if t.lower() not in (english_sw + ['rrb','lrb'])]
 
 def stem_words(row):
 	eng_stemmer = SnowballStemmer('english')
@@ -144,7 +144,7 @@ def stem_words(row):
 
 def pos_tagging(df):
 	pos_tags = nltk.pos_tag(df['token'])
-	return [(PoS[0], penn_to_wn(PoS[1])) for PoS in pos_tags] 
+	return [(PoS[0], penn_to_wn(PoS[1])) for PoS in pos_tags]
 
 def lem_words(row):
 	w_lemmatizer = WordNetLemmatizer()
