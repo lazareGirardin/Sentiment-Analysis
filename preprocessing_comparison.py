@@ -37,7 +37,7 @@ def perceptron_comparison(folds):
 	balance = True
 
 	#methods_list = ['token', 'stopwords', 'selected_stopwords', 'stem', 'lemm', 'word2vec', 'glove', 'n_gram']
-	methods_list = ['token']
+	methods_list = ['token', 'stopwords', 'selected_stopwords', 'stem', 'lemm']
 	acc = np.zeros((folds, 2))
 	f1 = np.zeros((folds, nb_class))
 	cmat = np.zeros((folds, nb_class, nb_class))
@@ -53,9 +53,13 @@ def perceptron_comparison(folds):
 			print('\t fold # {}'.format(fold))
 			# Create random datasets
 			x_train, y_train, x_test, y_test, y_train_int, y_test_int = create_sets(x, y, t_ratio, max_words, balance)
+			# Create a new model
 			model = create_model(top_words, size_embedding, max_words, nb_class)
+			# Native Keras solution for unbalnaced classes
 			class_w = class_weight.compute_class_weight('balanced', np.unique(y_train_int), y_train_int)
+			# Train the model
 			model.fit(x_train, y_train, validation_data=(x_test, y_test), nb_epoch=epochs, batch_size=batch, class_weight=class_w, verbose=1)
+			# Compute different score data: accuracy, f1, confusion matrix
 			acc[fold, TRAIN] = model.evaluate(x_train, y_train, verbose=0)[1]
 			acc[fold, TEST] = model.evaluate(x_test, y_test, verbose=0)[1]
 			y_pred = model.predict_classes(x_test, verbose = 0)
@@ -63,6 +67,7 @@ def perceptron_comparison(folds):
 			f1[fold, :] = f1_score(y_test_int, y_pred, average=None)
 			print(acc[fold])
 			print(f1[fold])
+		# Save the data to create a plot
 		name = path + method + '_acc.npy'
 		np.save(name, acc)
 		name = path + method + '_f1.npy'
