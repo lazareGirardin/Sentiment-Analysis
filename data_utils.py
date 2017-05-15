@@ -14,6 +14,8 @@ from keras.preprocessing import sequence
 from collections import Counter
 import operator
 
+NB_CLASS = 5
+
 def load_dict(method, max_words, datas = None, to_load=True):
 	
 	if to_load:
@@ -58,6 +60,8 @@ def load_dict(method, max_words, datas = None, to_load=True):
 		for word in datas[dataColumn].iloc[i]:
 			words.append(word)
 
+	#import pdb; pdb.set_trace()
+
 	counts = Counter(words)
 	print('The dataset contains {} unique words'.format(len(counts)))
 
@@ -81,7 +85,7 @@ def load_dict(method, max_words, datas = None, to_load=True):
 	return X, Y
 
 
-def create_sets(x, y, t_ratio, max_words):
+def create_sets(x, y, t_ratio, max_words, balanced = False):
 	"""
 		Create random partition of the data (ADD CLASS BALANCE ARGUMENT)
 		Input:
@@ -101,7 +105,15 @@ def create_sets(x, y, t_ratio, max_words):
 
 	# Pad all sequence with same length
 	x = sequence.pad_sequences(x, max_words)
-	x= x.reshape((x.shape[0], x.shape[1]))
+	x = x.reshape((x.shape[0], x.shape[1]))
+
+	# Balance classes by undersampling class 2
+	if balanced:
+		rm_size = len(x[y==2]) - len(x[y==3])
+		indices_class_2 = np.argwhere(y==2)
+		indices_rm = np.random.permutation(indices_class_2)
+		x = np.delete(x, indices_rm[:rm_size], 0)
+		y = np.delete(y, indices_rm[:rm_size], 0)
 
 	tr_length = int(t_ratio*x.shape[0])
 	idx = np.random.permutation(np.arange(x.shape[0]))
@@ -135,7 +147,7 @@ def tokenize_selected(df):
 	# Tokenize and remove punctuation
 	tokenizer = RegexpTokenizer(r'\w+')
 	# CHANGE HERE !
-	english_sw = ['a', 'i', 'me', 'you', 'of']
+	english_sw = ['i','me','my','myself','we','our','ours','ourselves','you','your','yours','yourself','yourselves','he','him','his','himself','she','her','hers','herself','it','its','itself','they','them','their','theirs','themselves','the', 'this','that','these','those','a','an', 'and']
 	tokens = tokenizer.tokenize(df['Phrase'])
 	return [t.lower() for t in tokens if t.lower() not in (english_sw + ['rrb','lrb'])]
 
@@ -149,7 +161,7 @@ def pos_tagging(df):
 
 def lem_words(row):
 	w_lemmatizer = WordNetLemmatizer()
-	return [[w_lemmatizer.lemmatize(word, tag) if tag else w_lemmatizer.lemmatize(word)] for (word, tag) in row['PoS']]
+	return [(w_lemmatizer.lemmatize(word, tag) if tag else w_lemmatizer.lemmatize(word)) for (word, tag) in row['PoS']]
 
 def is_noun(tag):
 	return tag in ['NN', 'NNS', 'NNP', 'NNPS']
