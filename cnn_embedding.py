@@ -1,9 +1,9 @@
 from keras.models import Sequential
-from keras.layers import Dense, Dropout, Activation
+from keras.layers import Dense, Dropout, Activation, Flatten
 #from keras.layers import Convolution2D, MaxPooling2D
 from keras.layers.convolutional import Conv1D
 from keras.layers.convolutional import MaxPooling1D
-from keras.layers import GlobalAveragePooling1D
+from keras.layers import GlobalAveragePooling1D, GlobalMaxPooling1D
 from keras.layers.embeddings import Embedding
 from keras.preprocessing import sequence
 from keras.utils import np_utils
@@ -24,7 +24,7 @@ from data_utils import *
 
 
 
-def cnn():
+def cnn(folds):
 
 	method = 'stem'
 
@@ -35,8 +35,11 @@ def cnn():
 	t_ratio = 0.8
 
 	batch = 32
-	epochs = 10
-	filters = 250
+	epochs = 5
+	#filters = 250
+
+	filters_list = [1, 10, 50, 100, 200, 250, 300, 350, 400, 500]
+
 	kernel_size = 3
 	hidden_dims = 250
 
@@ -44,9 +47,59 @@ def cnn():
 
 	x, y = load_dict(method, top_words)
 
-	x_train, y_train, x_test, y_test, y_train_int, y_test_int = create_sets(x, y, t_ratio, max_words, balance)
+	acc = np.zeros((folds, 2))
+	f1 = np.zeros((folds, nb_class))
+	cmat = np.zeros((folds, nb_class, nb_class))
 
-	class_w = class_weight.compute_class_weight('balanced', np.unique(y_train_int), y_train_int)
+	acc_mean = np.zeros((len(filters_list), 2))
+	acc_std = np.zeros((len(filters_list), 2))
+	f1_mean = np.zeros((len(filters_list), nb_class))
+	f1_std = np.zeros((len(filters_list), nb_class))
+	cmat_mean = np.zeros((len(filters_list), nb_class, nb_class))
+	cmat_std = np.zeros((len(filters_list), nb_class, nb_class))
+
+	for i, filters in enumerate(filters_list):
+		print('testing convolution with {} filters'.format(filters))
+		for fold in range(folds):
+			print("# {} fold".format(fold))
+			# Create a random split of the data
+			x_train, y_train, x_test, y_test, y_train_int, y_test_int = create_sets(x, y, t_ratio, max_words, balance)
+			class_w = class_weight.compute_class_weight('balanced', np.unique(y_train_int), y_train_int)
+			# Create the model with specified parameters
+			model = create_struct(top_words, size_embedding, max_words, filters, kernel_size, hidden_dims, nb_class)
+			model.fit(x_train, y_train, validation_data=(x_test, y_test), nb_epoch=epochs, batch_size=batch, class_weight=class_w, verbose=1)
+			# Compute performance measure
+			acc[fold, 0] = model.evaluate(x_train, y_train, verbose=0)[1]
+			acc[fold, 1] = model.evaluate(x_test, y_test, verbose=0)[1]
+			y_pred = model.predict_classes(x_test, verbose = 0)
+			cmat[fold] = confusion_matrix(y_test_int, y_pred)
+			f1[fold] = f1_score(y_test_int, y_pred, average=None)
+
+		# Only keep mean and variance
+		acc_mean[i] = np.mean(acc, axis=0)
+		acc_std[i] = np.std(acc, axis=0)
+		f1_mean[i] = np.mean(f1, axis=0)
+		f1_std[i] = np.std(f1, axis=0)
+		cmat_mean[i] = np.mean(cmat, axis=0)
+		cmat_std[i] = np.std(cmat, axis=0)
+
+	path = 'Data/structure/filters'
+
+	np.save(path + '_acc_mean.npy', acc_mean)
+	np.save(path + '_acc_std.npy', acc_std)
+	np.save(path + '_f1_mean.npy', f1_mean)
+	np.save(path + '_f1_std.npy', f1_std)
+	np.save(path + '_cmat_mean.npy', cmat_mean)
+	np.save(path + '_cmat_std.npy', cmat_std)
+
+	print(acc_train)
+	print(acc_test)
+	print(f1)
+	print(cmat)
+
+	import pdb; pdb.set_trace()
+
+def create_struct(top_words, size_embedding, max_words, filters, kernel_size, hidden_dims, nb_class):
 
 	model = Sequential()
 	model.add(Embedding(top_words, size_embedding, input_length = max_words))
@@ -54,7 +107,7 @@ def cnn():
 
 	model.add(Conv1D(filters, kernel_size,  border_mode='valid',
 											activation='relu'))
-	model.add(GlobalAveragePooling1D())
+	model.add(GlobalMaxPooling1D())
 
 	model.add(Dense(hidden_dims))
 	model.add(Dropout(0.2))
@@ -63,20 +116,5 @@ def cnn():
 	model.add(Dense(nb_class, activation='softmax'))
 
 	model.compile(loss='categorical_crossentropy', optimizer = 'adam', metrics=['categorical_accuracy'])
-	
-	print(model.summary())
 
-	model.fit(x_train, y_train, validation_data=(x_test, y_test), nb_epoch=epochs, batch_size=batch, class_weight=class_w, verbose=1)
-
-	acc_train = model.evaluate(x_train, y_train, verbose=0)[1]
-	acc_test = model.evaluate(x_test, y_test, verbose=0)[1]
-	y_pred = model.predict_classes(x_test, verbose = 0)
-	cmat = confusion_matrix(y_test_int, y_pred)
-	f1 = f1_score(y_test_int, y_pred, average=None)
-
-	print(acc_train)
-	print(acc_test)
-	print(f1)
-	print(cmat)
-
-	import pdb; pdb.set_trace()
+	return model
