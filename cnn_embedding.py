@@ -22,8 +22,6 @@ from sklearn.utils import class_weight
 
 from data_utils import *
 
-
-
 def cnn(folds):
 
 	method = 'stem'
@@ -36,12 +34,13 @@ def cnn(folds):
 
 	batch = 32
 	epochs = 5
-	#filters = 250
 
-	filters_list = [1, 10, 50, 100, 200, 250, 300, 350, 400, 500]
-
+	filters = 100
+	#filters_list = [1, 10, 50, 100, 200, 250, 300, 350, 400, 500]
+	
 	kernel_size = 3
-	hidden_dims = 250
+	#hidden_dims = 250
+	hidden_dims_list = [50, 100, 200, 300, 400, 500]
 
 	nb_class = 5
 
@@ -51,15 +50,17 @@ def cnn(folds):
 	f1 = np.zeros((folds, nb_class))
 	cmat = np.zeros((folds, nb_class, nb_class))
 
-	acc_mean = np.zeros((len(filters_list), 2))
-	acc_std = np.zeros((len(filters_list), 2))
-	f1_mean = np.zeros((len(filters_list), nb_class))
-	f1_std = np.zeros((len(filters_list), nb_class))
-	cmat_mean = np.zeros((len(filters_list), nb_class, nb_class))
-	cmat_std = np.zeros((len(filters_list), nb_class, nb_class))
+	test_length = len(hidden_dims_list)
 
-	for i, filters in enumerate(filters_list):
-		print('testing convolution with {} filters'.format(filters))
+	acc_mean = np.zeros((test_length, 2))
+	acc_std = np.zeros((test_length, 2))
+	f1_mean = np.zeros((test_length, nb_class))
+	f1_std = np.zeros((test_length, nb_class))
+	cmat_mean = np.zeros((test_length, nb_class, nb_class))
+	cmat_std = np.zeros((test_length, nb_class, nb_class))
+
+	for i, hidden_dims in enumerate(hidden_dims_list):
+		print('testing convolution with {} hidden dims'.format(hidden_dims))
 		for fold in range(folds):
 			print("# {} fold".format(fold))
 			# Create a random split of the data
@@ -75,7 +76,7 @@ def cnn(folds):
 			cmat[fold] = confusion_matrix(y_test_int, y_pred)
 			f1[fold] = f1_score(y_test_int, y_pred, average=None)
 
-		# Only keep mean and variance
+		# Only keep mean and variance over folds
 		acc_mean[i] = np.mean(acc, axis=0)
 		acc_std[i] = np.std(acc, axis=0)
 		f1_mean[i] = np.mean(f1, axis=0)
@@ -83,7 +84,7 @@ def cnn(folds):
 		cmat_mean[i] = np.mean(cmat, axis=0)
 		cmat_std[i] = np.std(cmat, axis=0)
 
-	path = 'Data/structure/filters'
+	path = 'Data/structure/hidden_dims'
 
 	np.save(path + '_acc_mean.npy', acc_mean)
 	np.save(path + '_acc_std.npy', acc_std)
@@ -92,12 +93,12 @@ def cnn(folds):
 	np.save(path + '_cmat_mean.npy', cmat_mean)
 	np.save(path + '_cmat_std.npy', cmat_std)
 
-	print(acc_train)
-	print(acc_test)
-	print(f1)
-	print(cmat)
+	print(acc_mean.shape)
+	print(acc_std.shape)
+	print(f1_mean.shape)
+	print(cmat_shape.shape)
 
-	import pdb; pdb.set_trace()
+	#import pdb; pdb.set_trace()
 
 def create_struct(top_words, size_embedding, max_words, filters, kernel_size, hidden_dims, nb_class):
 
