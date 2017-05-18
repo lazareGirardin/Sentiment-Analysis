@@ -37,8 +37,8 @@ def perceptron_comparison(folds):
 
 	balance = True
 
-	#methods_list = ['token', 'stopwords', 'selected_stopwords', 'stem', 'lemm', 'word2vec', 'glove', 'n_gram']
-	methods_list = ['token']
+	methods_list = ['token', 'stopwords', 'selected_stopwords', 'stem', 'lemm']
+	#methods_list = ['token']
 	acc = np.zeros((folds, 2))
 	f1 = np.zeros((folds, nb_class))
 	cmat = np.zeros((folds, nb_class, nb_class))
@@ -48,8 +48,10 @@ def perceptron_comparison(folds):
 	# For all methods that we want to compare
 	for method in methods_list:
 		print('Evaluation of the {} method'.format(method))
+		
 		# Load the corresponding dictionary
 		x, y = load_dict(method, top_words)
+
 		for fold in range(folds):
 			print('\t fold # {}'.format(fold))
 			# Create random datasets
@@ -75,7 +77,6 @@ def perceptron_comparison(folds):
 		np.save(name, f1)
 		name = path + method +  'bal_cmat.npy'
 		np.save(name, cmat)
-
 
 	"""# Full Stopwords
 				x, y = load_dict('stopwords', max_words)
