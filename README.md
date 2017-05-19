@@ -29,10 +29,15 @@ Preprocessing:
 
 ### Binary Classification task
 Sentiment Analysis on a binarized version of the RottenTomatoes dataset.
+
 Two binarization strategies:
 - Naive: Every reviews with y <= 2 mapped to 0 otherwise 1.
-- Ambiguous reviews removed: Removal of every reviews where y = 2 (neutral). Otherwise,
-f(y) = 0 if y < 2 and f(y) if y > 2.
+- Ambiguous reviews removed: Removal of every reviews where y = 2 (neutral).
+Otherwise, f(y) = 0 if y < 2 and f(y) if y > 2.
+
+Classification Model:
+- pre-processing: Tokenization, GloVe embedding
+- Convolutional Neural Network
 
 Related files:
 - binary_mapping_01.ipynb, binary_mapping_02.ipynb:
@@ -41,4 +46,4 @@ ipython notebooks used to visualize and map the reviews sentiments into binary v
 csv files containing the two binarized datasets after mapping.
 - binary_cnn.py:
 python script training and running the CNN model on either one of the latter dataset.
-See comment of scripts for execution. 
+See comment of scripts for execution.
