@@ -24,6 +24,8 @@
 			- saveModel: save model after training at Data/models/name.h5
 
 		Output:
+			- validation accuracy
+			- training accuracy
 			- accuracies during training if saveData = TRUE
 			- model weights if saveModel = TRUE
 
@@ -80,11 +82,10 @@ def GloVe( nbFilters=128, EMBEDDING_DIM=200, kernel_size=3, dropout_rate = 0.25,
 	history = model.fit(x_train, y_train, validation_data=(x_test, y_test), nb_epoch=8, batch_size=32, class_weight=class_w, verbose=1)
 
 	# ******** SAVE DATA *******************
+	val_acc = history.history['val_categorical_accuracy']
+	train_acc = history.history['categorical_accuracy']
 	
 	if saveData:
-		val_acc = history.history['val_categorical_accuracy']
-		train_acc = history.history['categorical_accuracy']
-
 		path = 'Data/history/'+name
 		save_name = path+'_AccVal.npy'
 		np.save(save_name, val_acc)
@@ -103,6 +104,8 @@ def GloVe( nbFilters=128, EMBEDDING_DIM=200, kernel_size=3, dropout_rate = 0.25,
 	print(cmat)
 	# Print the weighted f1-measure of the predictions
 	print(f1_score(y_true, y_pred, average='weighted'))
+
+	return val_acc, train_acc
 
 def create_architecture(dict_length, EMBEDDING_DIM, embedding_matrix, max_words, dropout_rate, nbFilters, kernel_size, nbClass):
 	"""
