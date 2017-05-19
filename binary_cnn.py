@@ -12,10 +12,41 @@ from sklearn.metrics import f1_score, confusion_matrix
 import os
 import pickle
 
+"""
+************ AML PROJECT: SENTIMENT ANALYSIS ON MOVIE REVIEWS (BINARY CLASSIFICATION)******************
+
+	This function trains a convolutional neural network over movie reviews.
+	The reviews are split in words and tokenized, and matched to a lexicon integer entry
+	in order to feed integers values to the network.
+
+	The CNN is trained using Keras, which is based on TensorFlow (or Theano if chosen).
+
+	This code explores the use of pre-trained word vectorization (GloVe)from all words of wikipedia.
+	- Vectors can be found: https://nlp.stanford.edu/projects/glove/
+
+	The part matching words and the pre-trained vectors is highly inspirated from Keras blog
+	https://blog.keras.io/using-pre-trained-word-embeddings-in-a-keras-model.html
+
+    This script runs a binary classification on 2 possible datasets: binarized versions of the original
+    multi-class dataset. It uses already optimized parameters on the vectorization of reviews and
+    on the CNN network design.
+
+    The naive parameter indicates the model either to run on the naive binarization or not. If not, the
+    dataset used is a dataset where ambiguous reviews (rated 2 out of 4) are removed which simplify the
+    binarization of reviews (0 if y < 2, 1 if y > 2).
+
+	Example of use:
+
+		run_model(naive=True)
+
+	authors: Hector Parmantier and Lazare Girardin
+
+"""
 
 
+#Function loading the csv files containing our data.
+#returns the phrases and their respective sentiment (0 or 1)
 def load_bin_data(naive=False):
-    #load binarized data
     if naive:
         train = pd.DataFrame.from_csv("./Data/binary_naive.csv", sep='\t', encoding='utf-8')
     else:
@@ -23,6 +54,8 @@ def load_bin_data(naive=False):
     return train["Phrase"], train["Sentiment"]
 
 
+#Computes the pre-processing (tokenization, embedding) of the loaded phrases and
+#applies the random train/test split of the data.
 def glove_embedding(phrase, sentiment):
     tr_ratio = 0.8
 
@@ -76,6 +109,8 @@ def glove_embedding(phrase, sentiment):
     return (X_train, y_train), (X_test, y_test), (len(word_index), embedding_matrix)
 
 
+#Function running the CNN model. Training + prediction
+#Returns the obtained f1-score and history of each epoch (loss, train/validation accuracy)
 def run_model(naive=False):
     max_features = 5000
     batch_size = 32
@@ -84,8 +119,6 @@ def run_model(naive=False):
     kernel_size = 3
     hidden_dims = 250
     epochs = 5
-    #sentiment_column = "Naive"
-
 
     print("Loading Data...")
     phrase, sentiment = load_bin_data(naive)
@@ -93,7 +126,6 @@ def run_model(naive=False):
 
     print("Build Model...")
     model = Sequential()
-    #Emedding: TO REMOVE
     model.add(Embedding(word_index_len + 1, embedding_dims, weights=[embedding_matrix], input_length=X_train.shape[1], trainable=False))
 
     model.add(Dropout(0.2))
@@ -115,17 +147,6 @@ def run_model(naive=False):
     print(cmat)
     print(f1)
     return {"f1-score": f1, "history": history.history}
-
-
-
-# columns = ["Naive", "Vader", "VaderOnPhrase"]
-# results = {}
-# for c in columns:
-#     print("=============================== "+c+" ====================================")
-#     results[c] = run_model(c)
-#
-# with open('assignment_performances.pickle', 'wb') as handle:
-#     pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 run_model(naive=True)
 #with open('no2_assignment_performances.pickle', 'wb') as handle:
