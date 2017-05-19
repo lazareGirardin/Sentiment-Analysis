@@ -59,8 +59,6 @@ from sklearn.metrics import f1_score, confusion_matrix
 from sklearn.utils import class_weight
 from nltk.tokenize import RegexpTokenizer
 
-from data_utils import *
-
 def GloVe( nbFilters=128, EMBEDDING_DIM=200, kernel_size=3, dropout_rate = 0.25, 
 		   vocab_size=15000, name='dummy', saveData=True, saveModel=False ):
 
